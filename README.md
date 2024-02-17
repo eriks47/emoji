@@ -1,5 +1,7 @@
 # 😀 emoji - a simple TUI emoji picker
 
+https://github.com/eriks47/emoji/assets/90338990/93ebb03e-0a4e-42d5-97a4-d71d2769810a
+
 ## ⭐ Features
 - Almost 2000 emojis
 - Simple and easy to use
@@ -20,3 +22,6 @@ the search is case insensitive.
 go build main.go emoji.go
 sudo cp main /usr/bin/emoji
 ```
+
+
+

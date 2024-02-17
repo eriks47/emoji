@@ -80,7 +80,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if found == 5 {
 			break
 		}
-		if strings.Contains(pair.title, m.search) {
+		if strings.Contains(strings.ToLower(pair.title), strings.ToLower(m.search)) {
 			head = append(head, pair)
 			found++
 		}

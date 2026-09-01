@@ -183,7 +183,7 @@ var Emojies = []emoji{
 	{"pinching hand", "🤏"},
 	{"victory hand", "✌️"},
 	{"crossed fingers", "🤞"},
-	{"hand with index finger &amp and thumb crossed", "🫰"},
+	{"hand with index finger and thumb crossed", "🫰"},
 	{"love-you gesture", "🤟"},
 	{"sign of the horns", "🤘"},
 	{"call me hand", "🤙"},

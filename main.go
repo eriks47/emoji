@@ -68,6 +68,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
                 m.search = m.search[:len(m.search)-1]
             }
 
+		case " ":
+			m.search += " "
+
         default:
             if msg.Type == tea.KeyRunes {
                 m.search = m.search + string(msg.Runes)

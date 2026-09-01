@@ -14,6 +14,7 @@ type model struct {
 	selected int
 	search   string
 	windowStart int
+	width int
 }
 
 func initialModel() model {
@@ -31,6 +32,10 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
     switch msg := msg.(type) {
+
+	case tea.WindowSizeMsg:
+        m.width = msg.Width
+
     case tea.KeyMsg:
         switch msg.String() {
 
@@ -106,17 +111,35 @@ func (m model) View() string {
         end = len(m.choices)
     }
 
+	termWidth := m.width
+    if termWidth == 0 {
+        termWidth = 80 
+    }
+
 	for i := m.windowStart; i < end; i++ {
         choice := m.choices[i]
         cursor := "  "
         if m.selected == i {
             cursor = "> "
         }
-        s += fmt.Sprintf("%s%s %s\n", cursor, choice.emoji, choice.title)
-    }
-    
-	s += fmt.Sprintf("\n(Showing %d of %d results)\n", end-m.windowStart, len(m.choices))
+        title := choice.title
+        
+        // Calculate max allowed length for the title.
+        // We subtract 10 to reserve space for the cursor, emoji, spaces, and margin.
+        maxTitleLen := termWidth - 10 
+        
+        // Safely truncate string using runes
+        if maxTitleLen > 0 {
+            titleRunes := []rune(title)
+            if len(titleRunes) > maxTitleLen {
+                title = string(titleRunes[:maxTitleLen-3]) + "..."
+            }
+        }
 
+        s += fmt.Sprintf("%s%s %s\n", cursor, choice.emoji, title)
+    }
+
+    s += fmt.Sprintf("\n(Showing %d of %d results)\n", end-m.windowStart, len(m.choices))
     return s
 }
 

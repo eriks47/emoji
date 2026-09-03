@@ -1926,5 +1926,3 @@ var Emojies = []emoji{
 	{"trombone", "🪊"},
 	{"treasure chest", "🪎"},
 }
-
-

@@ -13,24 +13,17 @@ type model struct {
 	choices  []emoji
 	selected int
 	search   string
+	windowStart int
+	width int
 }
 
 func initialModel() model {
-	var head []emoji
-	i := 0
-	for _, pair := range Emojies {
-		if i == 5 {
-			break
-		}
-		head = append(head, pair)
-		i++
-	}
-
-	return model{
-		choices:  head,
-		selected: 0,
-		search:   "",
-	}
+    return model{
+        choices:     Emojies,
+        selected:    0,
+        search:      "",
+        windowStart: 0,
+    }
 }
 
 func (m model) Init() tea.Cmd {
@@ -38,71 +31,119 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
+    switch msg := msg.(type) {
 
-		case "escape":
-			return m, tea.Quit
+	case tea.WindowSizeMsg:
+        m.width = msg.Width
 
-		case "down":
-			if m.selected-1 < len(m.choices) {
-				m.selected++
-			}
+    case tea.KeyMsg:
+        switch msg.String() {
 
-		case "up":
-			if m.selected > 0 {
-				m.selected--
-			}
+        case "escape", "ctrl+c":
+            return m, tea.Quit
 
-		case "enter":
-			emoji := m.choices[m.selected]
-			err := clipboard.WriteAll(emoji.emoji)
-			if err == nil {
-				fmt.Printf("✅ Successfuly copied %s \"%s\" to clipboard!\n", emoji.emoji, emoji.title)
-			}
-			return m, tea.Quit
+        case "down":
+            if m.selected < len(m.choices)-1 {
+                m.selected++
+            }
 
-		case "backspace":
-			if len(m.search) > 0 {
-				m.search = m.search[:len(m.search)-1]
-			}
+        case "up":
+            if m.selected > 0 {
+                m.selected--
+            }
 
-		default:
-			m.search = m.search + string(msg.Runes)
-		}
+        case "enter":
+            if len(m.choices) == 0 {
+                return m, nil
+            }
+            emoji := m.choices[m.selected]
+            err := clipboard.WriteAll(emoji.emoji)
+            if err == nil {
+                fmt.Printf("✅ Successfully copied %s \"%s\" to clipboard!\n", emoji.emoji, emoji.title)
+            }
+            return m, tea.Quit
 
-	}
+        case "backspace":
+            if len(m.search) > 0 {
+                m.search = m.search[:len(m.search)-1]
+            }
 
-	var head []emoji
-	found := 0
-	for _, pair := range Emojies {
-		if found == 5 {
-			break
-		}
-		if strings.Contains(strings.ToLower(pair.title), strings.ToLower(m.search)) {
-			head = append(head, pair)
-			found++
-		}
-	}
-	m.choices = head
+		case " ":
+			m.search += " "
 
-	return m, nil
+        default:
+            if msg.Type == tea.KeyRunes {
+                m.search = m.search + string(msg.Runes)
+            }
+        }
+    }
+
+	var allMatches []emoji
+    for _, pair := range Emojies {
+        if strings.Contains(strings.ToLower(pair.title), strings.ToLower(m.search)) {
+            allMatches = append(allMatches, pair)
+        }
+    }
+    m.choices = allMatches
+
+	if m.selected >= len(m.choices) {
+        m.selected = len(m.choices) - 1
+        if m.selected < 0 {
+            m.selected = 0
+        }
+    }
+
+	if m.selected < m.windowStart {
+		m.windowStart = m.selected
+    } else if m.selected >= m.windowStart+5 {
+		m.windowStart = m.selected - 4
+    }
+
+	if len(m.choices) == 0 {
+        m.windowStart = 0
+    }
+
+    return m, nil
 }
 
 func (m model) View() string {
-	s := fmt.Sprintf("Search: %s\n", m.search)
+    s := fmt.Sprintf("Search: %s\n", m.search)
 
-	for i, choice := range m.choices {
-		cursor := " "
-		if m.selected == i {
-			cursor = ">"
-		}
+	end := m.windowStart + 5
+    if end > len(m.choices) {
+        end = len(m.choices)
+    }
 
-		s += fmt.Sprintf("%s %s %s\n", cursor, choice.emoji, choice.title)
-	}
+	termWidth := m.width
+    if termWidth == 0 {
+        termWidth = 80 
+    }
 
-	return s
+	for i := m.windowStart; i < end; i++ {
+        choice := m.choices[i]
+        cursor := "  "
+        if m.selected == i {
+            cursor = "> "
+        }
+        title := choice.title
+        
+        // Calculate max allowed length for the title.
+        // We subtract 10 to reserve space for the cursor, emoji, spaces, and margin.
+        maxTitleLen := termWidth - 10 
+        
+        // Safely truncate string using runes
+        if maxTitleLen > 0 {
+            titleRunes := []rune(title)
+            if len(titleRunes) > maxTitleLen {
+                title = string(titleRunes[:maxTitleLen-3]) + "..."
+            }
+        }
+
+        s += fmt.Sprintf("%s%s %s\n", cursor, choice.emoji, title)
+    }
+
+    s += fmt.Sprintf("\n(Showing %d of %d results)\n", end-m.windowStart, len(m.choices))
+    return s
 }
 
 func main() {

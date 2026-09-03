@@ -1,9 +1,9 @@
-# 😀 emoji - a simple TUI emoji picker
+# 🫪 emoji - a simple TUI emoji picker
 
 https://github.com/eriks47/emoji/assets/90338990/93ebb03e-0a4e-42d5-97a4-d71d2769810a
 
 ## ⭐ Features
-- Almost 2000 emojis
+- Almost 2000 emojis (including the latest 17.0 emojies)
 - Simple and easy to use
 
 ## 📋 Usage

@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode"
 
 	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
+	"golang.org/x/text/unicode/norm"
 )
 
 type model struct {
@@ -80,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	var allMatches []emoji
 	for _, pair := range Emojies {
-		if strings.Contains(strings.ToLower(pair.title), strings.ToLower(m.search)) {
+		if strings.Contains(normalize_string(pair.title), normalize_string(m.search)) {
 			allMatches = append(allMatches, pair)
 		}
 	}
@@ -104,6 +106,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, nil
+}
+
+func normalize_string(s string) string {
+	s = norm.NFD.String(strings.ToLower(s))
+	var b strings.Builder
+	for _, r := range s {
+		if unicode.Is(unicode.Mn, r) {
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return b.String()
 }
 
 func (m model) View() string {
